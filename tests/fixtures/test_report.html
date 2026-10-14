@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPT Content & Alignment QA Report</title>
+<style>
+  :root {
+    --bg: #0F172A;
+    --card-bg: #1E293B;
+    --card-border: #334155;
+    --text: #F8FAFC;
+    --text-muted: #94A3B8;
+    --error: #EF4444;
+    --pass: #22C55E;
+    --info: #3B82F6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    padding: 2rem;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  .header h1 { font-size: 2rem; color: #38BDF8; margin-bottom: 0.5rem; }
+  .grid-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .card .num { font-size: 2.2rem; font-weight: 800; }
+  .card .lbl { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-top: 0.3rem; }
+  .badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge-pass { background: rgba(34, 197, 94, 0.2); color: #4ADE80; }
+  .badge-fail { background: rgba(239, 68, 68, 0.2); color: #F87171; }
+  .badge-info { background: rgba(59, 130, 246, 0.2); color: #60A5FA; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    background: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--card-border);
+    font-size: 0.9rem;
+  }
+  th { background: #0B1120; color: #94A3B8; text-transform: uppercase; font-size: 0.75rem; }
+  .sec-title { font-size: 1.3rem; margin: 2rem 0 0.8rem; color: #38BDF8; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>PPT Content & Alignment Comparison Report</h1>
+    <p style="color: var(--text-muted);">Verification of Rule 1 (Content Preservation) & Rule 2 (Alignment / Layout Preservation)</p>
+    <div style="margin-top: 1rem; display: flex; gap: 2rem; font-size: 0.9rem;">
+      <div><strong>Original:</strong> sample_original.pptx (6 slides)</div>
+      <div><strong>Remediated:</strong> sample_remediated.pptx (6 slides)</div>
+      <div><strong>Generated:</strong> 2026-10-13 17:02:18</div>
+    </div>
+  </div>
+
+  <div class="grid-metrics">
+    <div class="card">
+      <div class="num" style="color: #F87171;">2</div>
+      <div class="lbl">Rule 1 Content Errors</div>
+    </div>
+    <div class="card">
+      <div class="num" style="color: #FB923C;">3</div>
+      <div class="lbl">Rule 2 Alignment Errors</div>
+    </div>
+    <div class="card">
+      <div class="num" style="color: #4ADE80;">1</div>
+      <div class="lbl">Slides Passed</div>
+    </div>
+    <div class="card">
+      <div class="num" style="color: #F87171;">5</div>
+      <div class="lbl">Slides Failed</div>
+    </div>
+  </div>
+
+  <div class="sec-title">Rule 1: Content Preservation Issues (2)</div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Slide #</th>
+        <th>Element Name</th>
+        <th>Issue Type</th>
+        <th>Severity</th>
+        <th>Description</th>
+        <th>Original Value</th>
+        <th>Remediated Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td><strong>2</strong></td>
+        <td>Slide Text</td>
+        <td>Missing Text</td>
+        <td><span class="badge badge-fail">Error</span></td>
+        <td>Text from original slide is missing or altered in remediated slide.</td>
+        <td><code>Q3 financial highlights: Revenue grew by 24% year-over-year reaching 15 million dollars across all territories. Customer retention maintained at 98%.</code></td>
+        <td><code>Q3 financial highlights: Customer retention maintained at 98%.</code></td>
+      </tr>
+      
+      <tr>
+        <td><strong>3</strong></td>
+        <td>Picture 3</td>
+        <td>Missing Image</td>
+        <td><span class="badge badge-fail">Error</span></td>
+        <td>Image 'Picture 3' from original slide is missing in remediated slide.</td>
+        <td><code>Image (Hash: cd9b8ad2)</code></td>
+        <td><code>Missing</code></td>
+      </tr>
+      
+    </tbody>
+  </table>
+  
+
+  <div class="sec-title">Rule 2: Alignment / Layout Preservation Issues (3)</div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Slide #</th>
+        <th>Element Name</th>
+        <th>Issue Type</th>
+        <th>Description</th>
+        <th>Original Value</th>
+        <th>Remediated Value</th>
+        <th>Difference</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td><strong>4</strong></td>
+        <td>TargetBox</td>
+        <td>Shifted Position (Left)</td>
+        <td>Horizontal position shifted beyond 45720 EMU tolerance.</td>
+        <td><code>1828800 EMU (2.000")</code></td>
+        <td><code>2514600 EMU (2.750")</code></td>
+        <td style="color: #F87171;"><strong>+685800 EMU (+0.750")</strong></td>
+      </tr>
+      
+      <tr>
+        <td><strong>5</strong></td>
+        <td>ResizeBox</td>
+        <td>Resized Shape (Width)</td>
+        <td>Width resized beyond 45720 EMU tolerance.</td>
+        <td><code>3657600 EMU (4.000")</code></td>
+        <td><code>2286000 EMU (2.500")</code></td>
+        <td style="color: #F87171;"><strong>-1371600 EMU (-1.500")</strong></td>
+      </tr>
+      
+      <tr>
+        <td><strong>6</strong></td>
+        <td>AlignedTextBox (Paragraph 1)</td>
+        <td>Changed Text Alignment</td>
+        <td>Text paragraph alignment changed.</td>
+        <td><code>CENTER</code></td>
+        <td><code>LEFT</code></td>
+        <td style="color: #F87171;"><strong>CENTER -> LEFT</strong></td>
+      </tr>
+      
+    </tbody>
+  </table>
+  
+
+  <div class="sec-title">Slide-by-Slide Status Summary</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Remediated Slide</th>
+        <th>Original Slide</th>
+        <th>Status</th>
+        <th>Content Issues</th>
+        <th>Alignment Issues</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td>Slide 1</td>
+        <td>Slide 1</td>
+        <td><span class="badge badge-pass">Pass</span></td>
+        <td>0</td>
+        <td>0</td>
+      </tr>
+      
+      <tr>
+        <td>Slide 2</td>
+        <td>Slide 2</td>
+        <td><span class="badge badge-fail">Fail</span></td>
+        <td>1</td>
+        <td>0</td>
+      </tr>
+      
+      <tr>
+        <td>Slide 3</td>
+        <td>Slide 3</td>
+        <td><span class="badge badge-fail">Fail</span></td>
+        <td>1</td>
+        <td>0</td>
+      </tr>
+      
+      <tr>
+        <td>Slide 4</td>
+        <td>Slide 4</td>
+        <td><span class="badge badge-fail">Fail</span></td>
+        <td>0</td>
+        <td>1</td>
+      </tr>
+      
+      <tr>
+        <td>Slide 5</td>
+        <td>Slide 5</td>
+        <td><span class="badge badge-fail">Fail</span></td>
+        <td>0</td>
+        <td>1</td>
+      </tr>
+      
+      <tr>
+        <td>Slide 6</td>
+        <td>Slide 6</td>
+        <td><span class="badge badge-fail">Fail</span></td>
+        <td>0</td>
+        <td>1</td>
+      </tr>
+      
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

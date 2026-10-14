@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPT Compare & QA Checker Report</title>
+<style>
+  :root {
+    --bg: #0F172A;
+    --card-bg: #1E293B;
+    --card-border: #334155;
+    --text: #F8FAFC;
+    --text-muted: #94A3B8;
+    --critical: #EF4444;
+    --major: #F97316;
+    --minor: #EAB308;
+    --info: #3B82F6;
+    --pass: #22C55E;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.5;
+    padding: 2rem;
+  }
+  .container { max-width: 1280px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+  }
+  .header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: #38BDF8; }
+  .header p { color: var(--text-muted); font-size: 0.95rem; }
+  
+  .grid-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .card-metric {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    text-align: center;
+    transition: transform 0.2s ease;
+  }
+  .card-metric:hover { transform: translateY(-2px); }
+  .card-metric .num { font-size: 2.2rem; font-weight: 800; line-height: 1.2; }
+  .card-metric .label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
+  
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge-critical { background: rgba(239, 68, 68, 0.2); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+  .badge-major { background: rgba(249, 115, 22, 0.2); color: #FB923C; border: 1px solid rgba(249, 115, 22, 0.4); }
+  .badge-minor { background: rgba(234, 179, 8, 0.2); color: #FACC15; border: 1px solid rgba(234, 179, 8, 0.4); }
+  .badge-info { background: rgba(59, 130, 246, 0.2); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.4); }
+  .badge-pass { background: rgba(34, 197, 94, 0.2); color: #4ADE80; border: 1px solid rgba(34, 197, 94, 0.4); }
+  .badge-fail { background: rgba(239, 68, 68, 0.2); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+  .badge-warning { background: rgba(234, 179, 8, 0.2); color: #FACC15; border: 1px solid rgba(234, 179, 8, 0.4); }
+
+  .section-title { font-size: 1.4rem; font-weight: 700; margin: 2rem 0 1rem; color: #E2E8F0; }
+  
+  .slide-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .slide-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .slide-title { font-size: 1.15rem; font-weight: 600; }
+  
+  .issue-item {
+    background: rgba(15, 23, 42, 0.6);
+    border-left: 4px solid #94A3B8;
+    border-radius: 0 6px 6px 0;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.75rem;
+  }
+  .issue-item.Critical { border-left-color: var(--critical); }
+  .issue-item.Major { border-left-color: var(--major); }
+  .issue-item.Minor { border-left-color: var(--minor); }
+  .issue-item.Info { border-left-color: var(--info); }
+  
+  .issue-top { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem; }
+  .issue-rule { font-weight: 700; font-size: 0.95rem; }
+  .issue-element { color: var(--text-muted); font-size: 0.85rem; }
+  .issue-desc { font-size: 0.9rem; color: #CBD5E1; margin-bottom: 0.35rem; }
+  .issue-fix { font-size: 0.85rem; color: #38BDF8; font-style: italic; }
+  
+  .diff-box {
+    background: #0B1120;
+    border: 1px solid #1E293B;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .diff-del {
+    background-color: rgba(239, 68, 68, 0.25);
+    color: #FCA5A5;
+    text-decoration: line-through;
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+  .diff-ins {
+    background-color: rgba(34, 197, 94, 0.25);
+    color: #86EFAC;
+    font-weight: bold;
+    text-decoration: none;
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>PPT Compare & QA Checker</h1>
+    <p>Comprehensive Remediation QA, Content Preservation & Accessibility Compliance Report</p>
+    <div style="margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.9rem;">
+      <div><strong>Original:</strong> sample_original.pptx (6 slides)</div>
+      <div><strong>Remediated:</strong> sample_remediated.pptx (6 slides)</div>
+      <div><strong>Generated:</strong> 2026-10-13 15:55:55</div>
+    </div>
+  </div>
+
+  <div class="grid-metrics">
+    <div class="card-metric">
+      <div class="num" style="color: #F87171;">5</div>
+      <div class="label">Critical Issues</div>
+    </div>
+    <div class="card-metric">
+      <div class="num" style="color: #FB923C;">7</div>
+      <div class="label">Major Issues</div>
+    </div>
+    <div class="card-metric">
+      <div class="num" style="color: #FACC15;">5</div>
+      <div class="label">Minor Issues</div>
+    </div>
+    <div class="card-metric">
+      <div class="num" style="color: #60A5FA;">0</div>
+      <div class="label">Notices / Info</div>
+    </div>
+    <div class="card-metric">
+      <div class="num" style="color: #4ADE80;">1</div>
+      <div class="label">Slides Passed</div>
+    </div>
+    <div class="card-metric">
+      <div class="num" style="color: #F87171;">5</div>
+      <div class="label">Slides Failed</div>
+    </div>
+  </div>
+
+  
+  <div class="slide-card">
+    <div class="slide-header">
+      <div class="slide-title">Deck-Level Issues</div>
+      <span class="badge badge-fail">1 Issues</span>
+    </div>
+    
+    <div class="issue-item Major">
+      <div class="issue-top">
+        <span class="badge badge-major">Major</span>
+        <span class="issue-rule">Document Language Not Set</span>
+        <span class="issue-element">[Presentation Properties]</span>
+      </div>
+      <div class="issue-desc">The presentation does not have a default document language specified.</div>
+      <div class="issue-fix">💡 Fix: Set the document language in File -> Info -> Properties or ensure slide text language formatting is defined.</div>
+    </div>
+    
+  </div>
+  
+
+  <div class="section-title">Slide-by-Slide Detailed Findings</div>
+
+  
+  <div class="slide-card">
+    <div class="slide-header">
+      <div class="slide-title">
+        
+          Slide 1
+        
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-left: 0.5rem;">
+          Match: MATCHED (Text Sim: 100.0%
+          , SSIM: 100.0%)
+        </span>
+      </div>
+      <span class="badge badge-pass">Pass</span>
+    </div>
+
+    
+      <p style="color: var(--pass); font-size: 0.95rem;">✓ No accessibility or content discrepancy issues detected on this slide.</p>
+    
+
+    
+    <div style="margin-top: 1rem;">
+      <strong style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Text Difference Diff:</strong>
+      <div class="diff-box">Q3 Performance Review<br/>Comprehensive Financial and Operational Report</div>
+    </div>
+    
+  </div>
+  
+  <div class="slide-card">
+    <div class="slide-header">
+      <div class="slide-title">
+        
+          Slide 2
+        
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-left: 0.5rem;">
+          Match: MATCHED (Text Sim: 84.14%
+          , SSIM: 86.1%)
+        </span>
+      </div>
+      <span class="badge badge-fail">Fail</span>
+    </div>
+
+    
+      
+      <div class="issue-item Critical">
+        <div class="issue-top">
+          <span class="badge badge-critical">Critical</span>
+          <span class="issue-rule">Substantial Content Lost</span>
+          <span class="issue-element">[Slide Text]</span>
+        </div>
+        <div class="issue-desc">Significant text content was removed (28 words removed out of 40 original words, 70% lost).</div>
+        <div class="issue-fix">💡 Fix: Review removed words in the diff viewer and restore essential information.</div>
+      </div>
+      
+      <div class="issue-item Minor">
+        <div class="issue-top">
+          <span class="badge badge-minor">Minor</span>
+          <span class="issue-rule">Duplicate Slide Title</span>
+          <span class="issue-element">[Slide Title]</span>
+        </div>
+        <div class="issue-desc">Slide 2 shares the identical title 'Operational Highlights' with slide(s) 3.</div>
+        <div class="issue-fix">💡 Fix: Make each slide title unique (e.g. append '(Continued)', '(Part 2)', or differentiate the topic).</div>
+      </div>
+      
+      <div class="issue-item Major">
+        <div class="issue-top">
+          <span class="badge badge-major">Major</span>
+          <span class="issue-rule">Small Font Size</span>
+          <span class="issue-element">[Content Placeholder 2]</span>
+        </div>
+        <div class="issue-desc">Shape 'Content Placeholder 2' contains text rendered at 8.0pt, which is below the recommended 12pt threshold for presentation legibility.</div>
+        <div class="issue-fix">💡 Fix: Increase the font size to at least 12pt (and 14pt+ for body paragraphs) to ensure readability.</div>
+      </div>
+      
+      <div class="issue-item Minor">
+        <div class="issue-top">
+          <span class="badge badge-minor">Minor</span>
+          <span class="issue-rule">Minor Visual Layout Drift</span>
+          <span class="issue-element">[Visual Appearance]</span>
+        </div>
+        <div class="issue-desc">Noticeable visual shift detected (SSIM similarity: 86.1%).</div>
+        <div class="issue-fix">💡 Fix: Inspect diff overlay for text wrapping shifts or shape re-alignments.</div>
+      </div>
+      
+    
+
+    
+    <div style="margin-top: 1rem;">
+      <strong style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Text Difference Diff:</strong>
+      <div class="diff-box">Operational Highlights<br/>Key milestones achieved during<del class='diff-del'> the</del> third quarter:<br/>Revenue grew by 24% <del class='diff-del'>year-over-year</del> <ins class='diff-ins'>year-over-year.<br/>Audit</ins> <del class='diff-del'>reaching 15 million dollars across all territories.<br/>Customer retention maintained at 98% with customer satisfaction rating of 4.8.<br/>Critical security audit completed with zero vulnerabilities found.</del> <ins class='diff-ins'>finished.</ins></div>
+    </div>
+    
+  </div>
+  
+  <div class="slide-card">
+    <div class="slide-header">
+      <div class="slide-title">
+        
+          Slide 3
+        
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-left: 0.5rem;">
+          Match: MATCHED (Text Sim: 46.79%
+          , SSIM: 93.5%)
+        </span>
+      </div>
+      <span class="badge badge-fail">Fail</span>
+    </div>
+
+    
+      
+      <div class="issue-item Critical">
+        <div class="issue-top">
+          <span class="badge badge-critical">Critical</span>
+          <span class="issue-rule">Substantial Content Lost</span>
+          <span class="issue-element">[Slide Text]</span>
+        </div>
+        <div class="issue-desc">Significant text content was removed (2 words removed out of 2 original words, 100% lost).</div>
+        <div class="issue-fix">💡 Fix: Review removed words in the diff viewer and restore essential information.</div>
+      </div>
+      
+      <div class="issue-item Critical">
+        <div class="issue-top">
+          <span class="badge badge-critical">Critical</span>
+          <span class="issue-rule">Missing Image</span>
+          <span class="issue-element">[Images]</span>
+        </div>
+        <div class="issue-desc">1 image(s) from original slide are missing in the remediated slide (Orig: 2, Rem: 1).</div>
+        <div class="issue-fix">💡 Fix: Restore the missing image(s) and provide descriptive alternative text.</div>
+      </div>
+      
+      <div class="issue-item Minor">
+        <div class="issue-top">
+          <span class="badge badge-minor">Minor</span>
+          <span class="issue-rule">Duplicate Slide Title</span>
+          <span class="issue-element">[Slide Title]</span>
+        </div>
+        <div class="issue-desc">Slide 3 shares the identical title 'Operational Highlights' with slide(s) 2.</div>
+        <div class="issue-fix">💡 Fix: Make each slide title unique (e.g. append '(Continued)', '(Part 2)', or differentiate the topic).</div>
+      </div>
+      
+      <div class="issue-item Major">
+        <div class="issue-top">
+          <span class="badge badge-major">Major</span>
+          <span class="issue-rule">Filename as Alt Text</span>
+          <span class="issue-element">[Picture 2]</span>
+        </div>
+        <div class="issue-desc">Image has a raw filename as alternative text: 'chart_sample.png'.</div>
+        <div class="issue-fix">💡 Fix: Replace the file name with a human-readable description of what the visual depicts.</div>
+      </div>
+      
+    
+
+    
+    <div style="margin-top: 1rem;">
+      <strong style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Text Difference Diff:</strong>
+      <div class="diff-box"><del class='diff-del'>Market</del> <ins class='diff-ins'>Operational</ins> <del class='diff-del'>Segmentation</del> <ins class='diff-ins'>Highlights</ins></div>
+    </div>
+    
+  </div>
+  
+  <div class="slide-card">
+    <div class="slide-header">
+      <div class="slide-title">
+        
+          Slide 4
+        
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-left: 0.5rem;">
+          Match: MATCHED (Text Sim: 100.0%
+          , SSIM: 97.1%)
+        </span>
+      </div>
+      <span class="badge badge-fail">Fail</span>
+    </div>
+
+    
+      
+      <div class="issue-item Major">
+        <div class="issue-top">
+          <span class="badge badge-major">Major</span>
+          <span class="issue-rule">Table Header Row Not Set</span>
+          <span class="issue-element">[Table 2]</span>
+        </div>
+        <div class="issue-desc">Table 'Table 2' does not have the 'Header Row' option enabled.</div>
+        <div class="issue-fix">💡 Fix: Select the table, open the 'Table Design' ribbon in PowerPoint, and check 'Header Row'.</div>
+      </div>
+      
+      <div class="issue-item Minor">
+        <div class="issue-top">
+          <span class="badge badge-minor">Minor</span>
+          <span class="issue-rule">Empty Table Header Cells</span>
+          <span class="issue-element">[Table 2]</span>
+        </div>
+        <div class="issue-desc">Table header row contains empty cell(s) at column(s): [1].</div>
+        <div class="issue-fix">💡 Fix: Add descriptive header labels to every column in the table's first row.</div>
+      </div>
+      
+    
+
+    
+    <div style="margin-top: 1rem;">
+      <strong style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Text Difference Diff:</strong>
+      <div class="diff-box">Regional Breakdown</div>
+    </div>
+    
+  </div>
+  
+  <div class="slide-card">
+    <div class="slide-header">
+      <div class="slide-title">
+        
+          Slide 5
+        
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-left: 0.5rem;">
+          Match: MATCHED (Text Sim: 45.73%
+          , SSIM: 93.4%)
+        </span>
+      </div>
+      <span class="badge badge-fail">Fail</span>
+    </div>
+
+    
+      
+      <div class="issue-item Critical">
+        <div class="issue-top">
+          <span class="badge badge-critical">Critical</span>
+          <span class="issue-rule">Substantial Content Lost</span>
+          <span class="issue-element">[Slide Text]</span>
+        </div>
+        <div class="issue-desc">Significant text content was removed (11 words removed out of 11 original words, 100% lost).</div>
+        <div class="issue-fix">💡 Fix: Review removed words in the diff viewer and restore essential information.</div>
+      </div>
+      
+    
+
+    
+    <div style="margin-top: 1rem;">
+      <strong style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Text Difference Diff:</strong>
+      <div class="diff-box"><del class='diff-del'>Appendix</del> <ins class='diff-ins'>Executive</ins> <del class='diff-del'>-</del> <ins class='diff-ins'>Summary<br/>Newly</ins> <del class='diff-del'>Old</del> <ins class='diff-ins'>synthesized</ins> <del class='diff-del'>Methodologies<br/>Archived</del> <ins class='diff-ins'>summary</ins> <del class='diff-del'>calculations</del> <ins class='diff-ins'>added</ins> <del class='diff-del'>and</del> <ins class='diff-ins'>by</ins> <del class='diff-del'>historical</del> <ins class='diff-ins'>remediation</ins> <del class='diff-del'>baselines from 2021.</del> <ins class='diff-ins'>team.</ins></div>
+    </div>
+    
+  </div>
+  
+  <div class="slide-card">
+    <div class="slide-header">
+      <div class="slide-title">
+        
+          Slide 6
+        
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-left: 0.5rem;">
+          Match: MATCHED (Text Sim: 79.48%
+          , SSIM: 95.8%)
+        </span>
+      </div>
+      <span class="badge badge-fail">Fail</span>
+    </div>
+
+    
+      
+      <div class="issue-item Critical">
+        <div class="issue-top">
+          <span class="badge badge-critical">Critical</span>
+          <span class="issue-rule">Substantial Content Lost</span>
+          <span class="issue-element">[Slide Text]</span>
+        </div>
+        <div class="issue-desc">Significant text content was removed (7 words removed out of 11 original words, 64% lost).</div>
+        <div class="issue-fix">💡 Fix: Review removed words in the diff viewer and restore essential information.</div>
+      </div>
+      
+      <div class="issue-item Major">
+        <div class="issue-top">
+          <span class="badge badge-major">Major</span>
+          <span class="issue-rule">Speaker Notes Deleted</span>
+          <span class="issue-element">[Speaker Notes]</span>
+        </div>
+        <div class="issue-desc">Original slide had speaker notes, but they were completely removed in the remediated slide.</div>
+        <div class="issue-fix">💡 Fix: Restore the original speaker notes unless instructed to remove them.</div>
+      </div>
+      
+      <div class="issue-item Major">
+        <div class="issue-top">
+          <span class="badge badge-major">Major</span>
+          <span class="issue-rule">Insufficient Color Contrast</span>
+          <span class="issue-element">[Rectangle 3]</span>
+        </div>
+        <div class="issue-desc">Text in shape 'Rectangle 3' has contrast ratio 1.37:1 (Text: #DCDCDC, Background: #FFFFFF), below WCAG AA required 4.5:1.</div>
+        <div class="issue-fix">💡 Fix: Adjust text color #DCDCDC or background #FFFFFF to attain at least 4.5:1 contrast ratio.</div>
+      </div>
+      
+      <div class="issue-item Major">
+        <div class="issue-top">
+          <span class="badge badge-major">Major</span>
+          <span class="issue-rule">Non-Descriptive Hyperlink Text</span>
+          <span class="issue-element">[Content Placeholder 2]</span>
+        </div>
+        <div class="issue-desc">Hyperlink text 'Click here' is vague. Screen reader users need self-describing link destinations.</div>
+        <div class="issue-fix">💡 Fix: Change link text 'Click here' to describe the target destination (e.g., 'View the Annual Report').</div>
+      </div>
+      
+      <div class="issue-item Minor">
+        <div class="issue-top">
+          <span class="badge badge-minor">Minor</span>
+          <span class="issue-rule">Empty Text Box</span>
+          <span class="issue-element">[TextBox 4]</span>
+        </div>
+        <div class="issue-desc">Shape 'TextBox 4' contains an empty or whitespace-only text frame.</div>
+        <div class="issue-fix">💡 Fix: Delete unused empty text boxes to reduce clutter for screen reader navigation.</div>
+      </div>
+      
+    
+
+    
+    <div style="margin-top: 1rem;">
+      <strong style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Text Difference Diff:</strong>
+      <div class="diff-box">Resources &amp; Next Steps<br/><del class='diff-del'>Visit</del> <ins class='diff-ins'>Click</ins> <del class='diff-del'>our</del> <ins class='diff-ins'>here<br/>Low</ins> <del class='diff-del'>investor</del> <ins class='diff-ins'>contrast</ins> <del class='diff-del'>portal</del> <ins class='diff-ins'>gray</ins> <del class='diff-del'>for audited filings.</del> <ins class='diff-ins'>text</ins></div>
+    </div>
+    
+  </div>
+  
+
+</div>
+</body>
+</html>
